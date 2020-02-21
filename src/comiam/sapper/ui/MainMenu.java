@@ -138,6 +138,7 @@ public class MainMenu extends JFrame
                     getGameFrame().onPause();
             }
         });
+        
         mainFrame.addWindowListener(new WindowAdapter()
         {
             @Override
