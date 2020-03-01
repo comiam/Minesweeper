@@ -1,25 +1,26 @@
-package comiam.sapper.ui;
+package comiam.sapper.ui.gui;
 
-import comiam.sapper.game.Sapper;
-import comiam.sapper.time.Timer;
-import comiam.sapper.ui.components.CustomButton;
-import comiam.sapper.ui.components.CustomDialog;
-import comiam.sapper.ui.components.CustomPanel;
-import comiam.sapper.ui.components.UIDesigner;
+import comiam.sapper.game.Minesweeper;
+import comiam.sapper.game.records.Pair;
+import comiam.sapper.game.records.ScoreRecords;
+import comiam.sapper.ui.GameViewController;
+import comiam.sapper.ui.gui.components.CustomButton;
+import comiam.sapper.ui.gui.components.CustomDialog;
+import comiam.sapper.ui.gui.components.CustomPanel;
+import comiam.sapper.ui.gui.components.UIDesigner;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 
-import static comiam.sapper.time.Timer.makeTimeString;
-import static comiam.sapper.ui.MainMenu.*;
-import static comiam.sapper.ui.components.UIDesigner.DEFAULT_BACKGROUND;
+import static comiam.sapper.time.Timer.*;
+import static comiam.sapper.util.TextUtils.getTimeString;
+import static comiam.sapper.ui.gui.components.UIDesigner.DEFAULT_BACKGROUND;
 
-public class GameFrame extends JPanel
+public class GUIGame extends JPanel implements GameViewController
 {
     private static final int SIZE = 30;
     private final HashMap<CustomButton, Image> imageMap = new HashMap<>();
@@ -39,19 +40,38 @@ public class GameFrame extends JPanel
     private CustomButton replay;
     private CustomButton[] cells;
 
-    private int row, col;
-    private boolean timerOn = false;
     private boolean isButtonStop = false;
-    private boolean mayPause = true;
+    private JFrame parent;
 
-    public GameFrame(Sapper.FieldDimension dim)
+    public void init(JFrame parent)
     {
-        setSizes(dim);
-        setLayout(new GridBagLayout());
+        UIDesigner.init();
+        if(parent == null)
+        {
+            this.parent = new JFrame();
+            this.parent.setSize(300, 240);
+            this.parent.setLocationRelativeTo(null);
+            this.parent.setDefaultCloseOperation(Minesweeper.isMainController(this) ? WindowConstants.EXIT_ON_CLOSE : WindowConstants.DISPOSE_ON_CLOSE);
+            this.parent.setVisible(true);
+        }else
+            this.parent = parent;
 
+        makeFrameListeners();
+        setLayout(new GridBagLayout());
+        this.parent.setContentPane(this);
+
+        setSizes();
         fillContent();
         loadContent();
         setAutoResizer();
+        updatePanel();
+        this.parent.setLocationRelativeTo(null);
+
+        if(parent == null)
+        {
+            this.parent.revalidate();
+            this.parent.repaint();
+        }
     }
 
     @Override
@@ -156,26 +176,10 @@ public class GameFrame extends JPanel
         }
     }
 
-    private void setSizes(Sapper.FieldDimension dim)
+    private void setSizes()
     {
-        switch(dim)
-        {
-            case x16:
-                row = 16;
-                col = 16;
-                break;
-            case x32:
-                row = 32;
-                col = 32;
-                break;
-            case nothing:
-                return;
-            default:
-                throw new IllegalStateException("Unexpected value: " + dim);
-        }
-        setMinimumSize(new Dimension(col * SIZE, row * SIZE));
-        setPreferredSize(new Dimension(col * SIZE, row * SIZE));
-        setSize(new Dimension(col * SIZE, row * SIZE));
+        setPreferredSize(new Dimension(Minesweeper.getFieldSize().width * SIZE, Minesweeper.getFieldSize().height * SIZE));
+        setSize(new Dimension(Minesweeper.getFieldSize().width * SIZE, Minesweeper.getFieldSize().height * SIZE));
         setToMinimum();
     }
 
@@ -183,16 +187,16 @@ public class GameFrame extends JPanel
     {
         try
         {
-            bomb = ImageIO.read(new File("res/mine.png"));
-            flag = ImageIO.read(new File("res/flag.png"));
-            flagMaybe = ImageIO.read(new File("res/flagmaybe.png"));
-            goodFlag = ImageIO.read(new File("res/goodflag.png"));
-            badFlag = ImageIO.read(new File("res/badflag.png"));
-            goodFlagMaybe = ImageIO.read(new File("res/goodflagmaybe.png"));
-            badFlagMaybe = ImageIO.read(new File("res/badflagmaybe.png"));
+            bomb = ImageIO.read(GUIGame.class.getResourceAsStream("/res/mine.png"));
+            flag = ImageIO.read(GUIGame.class.getResourceAsStream("/res/flag.png"));
+            flagMaybe = ImageIO.read(GUIGame.class.getResourceAsStream("/res/flagmaybe.png"));
+            goodFlag = ImageIO.read(GUIGame.class.getResourceAsStream("/res/goodflag.png"));
+            badFlag = ImageIO.read(GUIGame.class.getResourceAsStream("/res/badflag.png"));
+            goodFlagMaybe = ImageIO.read(GUIGame.class.getResourceAsStream("/res/goodflagmaybe.png"));
+            badFlagMaybe = ImageIO.read(GUIGame.class.getResourceAsStream("/res/badflagmaybe.png"));
         } catch(IOException e)
         {
-            JOptionPane.showMessageDialog(null, "I cant load images. Game is кряк :c", "Error!", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "I cant load images. Game is krek :c", "Error!", JOptionPane.ERROR_MESSAGE);
             System.exit(1);
         }
     }
@@ -200,47 +204,48 @@ public class GameFrame extends JPanel
     private void fillContent()
     {
         this.removeAll();
+        this.setBackground(DEFAULT_BACKGROUND);
         minePanel = new CustomPanel();
         isButtonStop = false;
-        timerOn = false;
-        mayPause = true;
 
-        minePanel.setPreferredSize(new Dimension(col * SIZE, row * SIZE));
-        minePanel.setMinimumSize(new Dimension(col * SIZE, row * SIZE));
-        minePanel.setLayout(new GridLayout(row, col, 0, 0));
+        minePanel.setPreferredSize(new Dimension(Minesweeper.getFieldSize().width * SIZE, Minesweeper.getFieldSize().height * SIZE));
+        minePanel.setMinimumSize(new Dimension(Minesweeper.getFieldSize().width * SIZE, Minesweeper.getFieldSize().height * SIZE));
+        minePanel.setLayout(new GridLayout(Minesweeper.getFieldSize().width, Minesweeper.getFieldSize().height, 0, 0));
         minePanel.setBackground(DEFAULT_BACKGROUND);
 
-        cells = new CustomButton[row * col];
+        cells = new CustomButton[Minesweeper.getFieldSize().width * Minesweeper.getFieldSize().height];
 
-        for(int i = 0; i < row * col; i++)
+        for(int i = 0; i < Minesweeper.getFieldSize().width * Minesweeper.getFieldSize().height; i++)
         {
             CustomButton btn = new CustomButton();
             final int finalI = i;
 
-            btn.addMouseListener(new MouseAdapter()
-            {
-                @Override
-                public void mouseClicked(MouseEvent e)
+            if(Minesweeper.isMainController(this))
+                btn.addMouseListener(new MouseAdapter()
                 {
-                    if(!e.getComponent().isEnabled())
-                        return;
-                    if(!Sapper.isGameStarted())
+                    @Override
+                    public void mouseClicked(MouseEvent e)
                     {
-                        Sapper.initField(finalI % col, finalI / col);
-                        timerOn = true;
-                        Sapper.startGame();
-                        pause.setVisible(true);
-                        replay.setVisible(true);
-                        turnOnTimer();
-                    }
+                        if(!e.getComponent().isEnabled())
+                            return;
+                        if(!Minesweeper.isGameStarted())
+                        {
+                            Minesweeper.initField(finalI % Minesweeper.getFieldSize().width, finalI / Minesweeper.getFieldSize().height);
+                            Minesweeper.startGame();
+                            pause.setVisible(true);
+                            replay.setVisible(true);
+                            turnOnTimer();
+                        }
 
-                    if(SwingUtilities.isLeftMouseButton(e))
-                        Sapper.openCell(finalI % col, finalI / col);
-                    else if(SwingUtilities.isRightMouseButton(e))
-                        Sapper.markCell(finalI % col, finalI / col);
-                }
-            });
+                        if(SwingUtilities.isLeftMouseButton(e))
+                            Minesweeper.openCell(finalI % Minesweeper.getFieldSize().width, finalI / Minesweeper.getFieldSize().height);
+                        else if(SwingUtilities.isRightMouseButton(e))
+                            Minesweeper.markCell(finalI % Minesweeper.getFieldSize().width, finalI / Minesweeper.getFieldSize().height);
+                    }
+                });
             minePanel.add(btn);
+            if(!Minesweeper.isMainController(this))
+                btn.setEnabled(false);
             cells[i] = btn;
         }
         GridBagConstraints c = new GridBagConstraints();
@@ -254,8 +259,8 @@ public class GameFrame extends JPanel
         statPanel = new JPanel();
         statPanel.setLayout(new BorderLayout());
         statPanel.setBackground(DEFAULT_BACKGROUND);
-        statPanel.setMinimumSize(new Dimension(120, row * SIZE));
-        statPanel.setPreferredSize(new Dimension(120, row * SIZE));
+        statPanel.setMinimumSize(new Dimension(120, Minesweeper.getFieldSize().height * SIZE));
+        statPanel.setPreferredSize(new Dimension(120, Minesweeper.getFieldSize().height * SIZE));
 
         JPanel stat0Panel = new JPanel();
         stat0Panel.setLayout(new BoxLayout(stat0Panel, BoxLayout.Y_AXIS));
@@ -265,7 +270,7 @@ public class GameFrame extends JPanel
         flagCountL = new JLabel();
         try
         {
-            flagCountL.setIcon(new ImageIcon(ImageIO.read(new File("res/flag.png")).getScaledInstance(40, 50, Image.SCALE_AREA_AVERAGING)));
+            flagCountL.setIcon(new ImageIcon(ImageIO.read(GUIGame.class.getResourceAsStream("/res/flag.png")).getScaledInstance(40, 50, Image.SCALE_AREA_AVERAGING)));
         } catch(IOException ignored)
         {
         }
@@ -281,7 +286,7 @@ public class GameFrame extends JPanel
         timerCountL = new JLabel();
         try
         {
-            timerCountL.setIcon(new ImageIcon(ImageIO.read(new File("res/timer.png")).getScaledInstance(50, 50, Image.SCALE_AREA_AVERAGING)));
+            timerCountL.setIcon(new ImageIcon(ImageIO.read(GUIGame.class.getResourceAsStream("/res/timer.png")).getScaledInstance(50, 50, Image.SCALE_AREA_AVERAGING)));
         } catch(IOException ignored)
         {
         }
@@ -302,40 +307,7 @@ public class GameFrame extends JPanel
 
         CustomButton newGame = new CustomButton("New game?");
         newGame.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
-        newGame.addActionListener(e ->
-        {
-            Timer.stop();
-            if(!Sapper.isGameEnded() && Sapper.isGameStarted())
-            {
-                int a = JOptionPane.showConfirmDialog(getGameFrame(),
-                        "<html><h2>You are sure?</h2><i>Do you want start a new game?</i>",
-                        "Message",
-                        JOptionPane.YES_NO_OPTION,
-                        JOptionPane.WARNING_MESSAGE);
-
-                if(a != JOptionPane.YES_OPTION)
-                {
-                    Timer.on();
-                    return;
-                }
-            }
-            Sapper.FieldDimension dim = CustomDialog.getDimension(getGameFrame());
-            if(dim == Sapper.FieldDimension.nothing)
-                return;
-
-            setSizes(dim);
-            fillContent();
-            setAutoResizer();
-            updatePanel();
-            timerOn = false;
-            mayPause = true;
-            isButtonStop = false;
-
-            Sapper.newGame(dim);
-            pause.setVisible(false);
-            timerCountL.setText("00:00:00");
-            repaintFlag();
-        });
+        newGame.addActionListener(e -> Minesweeper.rebuildControllers());
 
         Font label12Font = UIDesigner.getFont(15, newGame.getFont(), false);
         if(label12Font != null) newGame.setFont(label12Font);
@@ -343,59 +315,7 @@ public class GameFrame extends JPanel
 
         replay = new CustomButton("Replay?");
         replay.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
-        replay.addActionListener(e ->
-        {
-            Timer.stop();
-            if(!Sapper.isGameEnded() && Sapper.isGameStarted())
-            {
-
-                int a = JOptionPane.showConfirmDialog(getGameFrame(),
-                        "<html><h2>You are sure?</h2><i>Do you want start a new game?</i>",
-                        "Message",
-                        JOptionPane.YES_NO_OPTION,
-                        JOptionPane.WARNING_MESSAGE);
-
-                if(a != JOptionPane.YES_OPTION)
-                {
-                    Timer.on();
-                    return;
-                }
-            }
-            if(!timerOn && pausePanel != null)
-            {
-                GridBagConstraints c0 = new GridBagConstraints();
-                c0.gridx = 0;
-                c0.gridy = 0;
-                c0.fill = GridBagConstraints.BOTH;
-                c0.anchor = GridBagConstraints.CENTER;
-
-                pause.setText("Pause?");
-                remove(pausePanel);
-                pausePanel = null;
-                add(minePanel, c0);
-            }
-
-            for(var b : cells)
-            {
-                b.setBackground(UIDesigner.BUTTON_BACKGROUND);
-                b.setText("");
-                b.setIcon(null);
-                b.setDisabledIcon(null);
-                b.setEnabled(true);
-                imageMap.remove(b);
-            }
-
-            Sapper.newGame();
-            pause.setVisible(false);
-            timerCountL.setText("00:00:00");
-            timerOn = false;
-            mayPause = true;
-            isButtonStop = false;
-
-            revalidate();
-            repaint();
-            repaintFlag();
-        });
+        replay.addActionListener(e -> Minesweeper.restartControllers());
 
         label12Font = UIDesigner.getFont(15, replay.getFont(), false);
         if(label12Font != null) replay.setFont(label12Font);
@@ -405,11 +325,11 @@ public class GameFrame extends JPanel
         pause.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
         pause.addActionListener(e ->
         {
-            if(Sapper.isGameEnded())
+            if(Minesweeper.isGameEnded())
                 return;
 
+            Minesweeper.pauseControllers();
             setPause();
-
         });
 
         label12Font = UIDesigner.getFont(15, pause.getFont(), false);
@@ -426,14 +346,148 @@ public class GameFrame extends JPanel
         add(statPanel, c);
         repaintFlag();
 
+        if(!Minesweeper.isMainController(this))
+            newGame.setVisible(false);
         pause.setVisible(false);
         replay.setVisible(false);
     }
 
     public void repaintFlag()
     {
-        flagCountL.setText(Sapper.getFlagCount() + "/" + Sapper.getMaxFlagCount());
+        flagCountL.setText(Minesweeper.getFlagCount() + "/" + Minesweeper.getMaxFlagCount());
     }
+
+    @Override
+    public boolean restartGame()
+    {
+        if(Minesweeper.isMainController(this))
+        {
+            if(!Minesweeper.isGameEnded() && Minesweeper.isGameStarted())
+            {
+                int a = JOptionPane.showConfirmDialog(parent,
+                        "<html><h2>You are sure?</h2><i>Do you want start a new game?</i>",
+                        "Message",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE);
+
+                if(a != JOptionPane.YES_OPTION)
+                {
+                    this.grabFocus();
+                    return false;
+                }
+            }
+        }
+
+        if(!isRunning() && pausePanel != null)
+        {
+            GridBagConstraints c0 = new GridBagConstraints();
+            c0.gridx = 0;
+            c0.gridy = 0;
+            c0.fill = GridBagConstraints.BOTH;
+            c0.anchor = GridBagConstraints.CENTER;
+
+            pause.setText("Pause?");
+            remove(pausePanel);
+            pausePanel = null;
+            add(minePanel, c0);
+        }
+
+        for(var b : cells)
+        {
+            b.setBackground(UIDesigner.BUTTON_BACKGROUND);
+            b.setText("");
+            b.setIcon(null);
+            b.setDisabledIcon(null);
+            b.setEnabled(true);
+            imageMap.remove(b);
+        }
+        if(Minesweeper.isMainController(this))
+            Minesweeper.newGame();
+        pause.setVisible(false);
+        timerCountL.setText("00:00:00");
+        isButtonStop = false;
+
+        revalidate();
+        repaint();
+        repaintFlag();
+
+        return true;
+    }
+
+    @Override
+    public boolean rebuildField()
+    {
+        if(Minesweeper.isMainController(this))
+        {
+            if(!Minesweeper.isGameEnded() && Minesweeper.isGameStarted())
+            {
+                int a = JOptionPane.showConfirmDialog(parent,
+                        "<html><h2>You are sure?</h2><i>Do you want start a new game?</i>",
+                        "Message",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE);
+
+                if(a != JOptionPane.YES_OPTION)
+                {
+                    this.grabFocus();
+                    return false;
+                }
+            }
+            Minesweeper.FieldDimension dim = CustomDialog.getDimension(parent);
+            if(dim == Minesweeper.FieldDimension.nothing)
+                return false;
+            Minesweeper.newGame(dim);
+        }
+
+        setSizes();
+        fillContent();
+        setAutoResizer();
+        updatePanel();
+        isButtonStop = false;
+        pause.setVisible(false);
+        timerCountL.setText("00:00:00");
+        repaintFlag();
+
+        return true;
+    }
+
+    @Override
+    public void noticeOverGame()
+    {
+        if(Minesweeper.isMainController(this))
+            JOptionPane.showMessageDialog(parent, "<html><h2>Sorry, you was died :c</h2><i>play again!</i>");
+    }
+
+    @Override
+    public void noticeWinGame()
+    {
+        if(Minesweeper.isMainController(this))
+        {
+            JOptionPane.showMessageDialog(parent, "<html><h2>You win! с:</h2><i>Your score " +
+                    getTimeString(getSeconds() / 3600) + ":" +
+                    getTimeString((getSeconds() % 3600) / 60) + ":" +
+                    getTimeString(getSeconds() % 60) + "!</i>");
+
+            String name = (String) JOptionPane.showInputDialog(parent,"Pls, enter your name :)", "Message", JOptionPane.QUESTION_MESSAGE, null, null, System.getProperty("user.name"));
+            if(name == null)
+                name = System.getProperty("user.name");
+
+            Pair p = new Pair(name + "_" + getTimeString(getSeconds() / 3600) + ":" +
+                    getTimeString((getSeconds() % 3600) / 60) + ":" +
+                    getTimeString(getSeconds() % 60));
+            ScoreRecords.saveRecord(p);
+            ScoresFrame.showRecords(parent);
+        }
+    }
+
+    @Override
+    public boolean isGUI()
+    {
+        return true;
+    }
+
+    @Override
+    public void update(){}
 
     private CustomPanel createPausePanel()
     {
@@ -519,18 +573,17 @@ public class GameFrame extends JPanel
 
     private void turnOnTimer()
     {
-        timerOn = true;
-        Timer.start(this::repaintTimer);
+        start(Minesweeper::repaintControllersTimer);
     }
 
-    private void repaintTimer()
+    public void repaintTimer()
     {
-        timerCountL.setText(makeTimeString(Timer.getSeconds() / 3600) + ":" + makeTimeString((Timer.getSeconds() % 3600) / 60) + ":" + makeTimeString(Timer.getSeconds() % 60));
+        timerCountL.setText(getTimeString(getSeconds() / 3600) + ":" + getTimeString((getSeconds() % 3600) / 60) + ":" + getTimeString(getSeconds() % 60));
     }
 
     public void setNumCell(int x, int y, int num)
     {
-        CustomButton btn = cells[y * col + x];
+        CustomButton btn = cells[y * Minesweeper.getFieldSize().width + x];
         Color col = switch(num)
                 {
                     case 1 -> new Color(129, 255, 135, 255);
@@ -550,35 +603,35 @@ public class GameFrame extends JPanel
 
     public void markCell(int x, int y)
     {
-        CustomButton btn = cells[y * col + x];
+        CustomButton btn = cells[y * Minesweeper.getFieldSize().width + x];
         btn.setIcon(new ImageIcon(flag.getScaledInstance((int) (btn.getWidth() - btn.getWidth() * 0.15), (int) (btn.getHeight() - btn.getHeight() * 0.15), Image.SCALE_AREA_AVERAGING)));
         imageMap.put(btn, flag);
     }
 
     public void markMaybeCell(int x, int y)
     {
-        CustomButton btn = cells[y * col + x];
+        CustomButton btn = cells[y * Minesweeper.getFieldSize().width + x];
         btn.setIcon(new ImageIcon(flagMaybe.getScaledInstance((int) (btn.getWidth() - btn.getWidth() * 0.15), (int) (btn.getHeight() - btn.getHeight() * 0.15), Image.SCALE_AREA_AVERAGING)));
         imageMap.put(btn, flagMaybe);
     }
 
     public void offMarkOnCell(int x, int y)
     {
-        CustomButton btn = cells[y * col + x];
+        CustomButton btn = cells[y * Minesweeper.getFieldSize().width + x];
         btn.setIcon(null);
         imageMap.remove(btn);
     }
 
     public void freeCell(int x, int y)
     {
-        CustomButton btn = cells[y * col + x];
+        CustomButton btn = cells[y * Minesweeper.getFieldSize().width + x];
         btn.setBackground(Color.WHITE);
         btn.setEnabled(false);
     }
 
     public void onPause()
     {
-        if(!timerOn)
+        if(!isRunning())
             return;
         GridBagConstraints c0 = new GridBagConstraints();
         c0.gridx = 0;
@@ -592,15 +645,14 @@ public class GameFrame extends JPanel
         revalidate();
         repaint();
         pause.setText("Run?");
-        timerOn = false;
-        Timer.stop();
+        stop();
         for(var a : cells)
             a.setEnabled(false);
     }
 
     public void offPause()
     {
-        if(timerOn || isButtonStop)
+        if(isRunning() || isButtonStop)
             return;
 
         GridBagConstraints c0 = new GridBagConstraints();
@@ -616,8 +668,7 @@ public class GameFrame extends JPanel
         revalidate();
         repaint();
 
-        timerOn = true;
-        Timer.on();
+        on();
         for(var a : cells)
             if(a.getBackground() == UIDesigner.BUTTON_BACKGROUND)
             {
@@ -625,7 +676,7 @@ public class GameFrame extends JPanel
             }
     }
 
-    private void setPause()
+    public void setPause()
     {
         GridBagConstraints c0 = new GridBagConstraints();
         c0.gridx = 0;
@@ -633,7 +684,7 @@ public class GameFrame extends JPanel
         c0.fill = GridBagConstraints.BOTH;
         c0.anchor = GridBagConstraints.CENTER;
 
-        if(timerOn)
+        if(isRunning())
         {
             remove(minePanel);
             pausePanel = createPausePanel();
@@ -642,40 +693,43 @@ public class GameFrame extends JPanel
             repaint();
             pause.setText("Run?");
             isButtonStop = true;
-            timerOn = false;
-            Timer.stop();
+            if(Minesweeper.isMainController(this))
+                stop();
             for(var a : cells)
                 a.setEnabled(false);
         } else
         {
+            if(pausePanel != null)
+            {
+                remove(pausePanel);
+                pausePanel = null;
+                add(minePanel, c0);
+            }
             pause.setText("Pause?");
-            remove(pausePanel);
-            pausePanel = null;
-            add(minePanel, c0);
             revalidate();
             repaint();
 
-            timerOn = true;
             isButtonStop = false;
-            Timer.on();
+            if(Minesweeper.isMainController(this))
+                on();
             for(var a : cells)
-                if(a.getBackground() == UIDesigner.BUTTON_BACKGROUND)
+                if(a.getBackground() == UIDesigner.BUTTON_BACKGROUND && Minesweeper.isMainController(this))
                     a.setEnabled(true);
         }
     }
 
     public void disableGame(byte[][] map)
     {
-        Timer.stop();
-        mayPause = false;
+        if(Minesweeper.isMainController(this))
+            stop();
 
         for(int x = 0; x < map.length; x++)
             for(int y = 0; y < map[x].length; y++)
             {
-                CustomButton btn = cells[y * col + x];
-                if(Sapper.isMaybeMarked(x, y))
+                CustomButton btn = cells[y * Minesweeper.getFieldSize().width + x];
+                if(Minesweeper.isMaybeMarked(map[x][y]))
                 {
-                    if(Sapper.isMined(x, y))
+                    if(Minesweeper.isMined(map[x][y]))
                     {
                         btn.setIcon(new ImageIcon(goodFlagMaybe.getScaledInstance((int) (btn.getWidth() - btn.getWidth() * 0.15), (int) (btn.getHeight() - btn.getHeight() * 0.15), Image.SCALE_AREA_AVERAGING)));
                         imageMap.put(btn, goodFlagMaybe);
@@ -685,9 +739,9 @@ public class GameFrame extends JPanel
                         imageMap.put(btn, badFlagMaybe);
                     }
                     btn.setDisabledIcon(btn.getIcon());
-                } else if(Sapper.isMarked(x, y))
+                } else if(Minesweeper.isMarked(map[x][y]))
                 {
-                    if(Sapper.isMined(x, y))
+                    if(Minesweeper.isMined(map[x][y]))
                     {
                         btn.setIcon(new ImageIcon(goodFlag.getScaledInstance((int) (btn.getWidth() - btn.getWidth() * 0.15), (int) (btn.getHeight() - btn.getHeight() * 0.15), Image.SCALE_AREA_AVERAGING)));
                         imageMap.put(btn, goodFlag);
@@ -697,7 +751,7 @@ public class GameFrame extends JPanel
                         imageMap.put(btn, badFlag);
                     }
                     btn.setDisabledIcon(btn.getIcon());
-                } else if(Sapper.isMined(x, y))
+                } else if(Minesweeper.isMined(map[x][y]))
                 {
                     btn.setIcon(new ImageIcon(bomb.getScaledInstance((int) (btn.getWidth() - btn.getWidth() * 0.15), (int) (btn.getHeight() - btn.getHeight() * 0.15), Image.SCALE_AREA_AVERAGING)));
                     imageMap.put(btn, bomb);
@@ -709,8 +763,68 @@ public class GameFrame extends JPanel
         pause.setVisible(false);
     }
 
-    public boolean canMakePause()
+    private void setToMinimum()
     {
-        return mayPause;
+        parent.setMinimumSize(new Dimension(100, 100));
+    }
+
+    private void updatePanel()
+    {
+        parent.revalidate();
+        parent.pack();
+        parent.setMinimumSize(parent.getSize());
+        parent.setResizable(true);
+    }
+
+    private void makeFrameListeners()
+    {
+        if(Minesweeper.isMainController(this))
+        {
+            parent.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+            parent.addWindowFocusListener(new WindowFocusListener()
+            {
+                @Override
+                public void windowGainedFocus(WindowEvent e)
+                {
+                    if(Minesweeper.isGameStarted() && !isButtonStop)
+                    {
+                        Minesweeper.pauseControllers();
+                        offPause();
+                    }
+                }
+
+                @Override
+                public void windowLostFocus(WindowEvent e)
+                {
+                    if(Minesweeper.isGameStarted() && !isButtonStop)
+                    {
+                        Minesweeper.pauseControllers();
+                        onPause();
+                    }
+                }
+            });
+
+            parent.addWindowListener(new WindowAdapter()
+            {
+                @Override
+                public void windowClosing(WindowEvent e)
+                {
+                    if(Minesweeper.isGameStarted() && Minesweeper.isMainController(((GameViewController)((JFrame)e.getWindow()).getContentPane())))
+                    {
+                        int a = JOptionPane.showConfirmDialog(parent,
+                                "<html><h2>You are sure?</h2><i>Do you want close the game?</i>",
+                                "Message",
+                                JOptionPane.YES_NO_OPTION,
+                                JOptionPane.WARNING_MESSAGE);
+
+                        if(a != JOptionPane.YES_OPTION)
+                            return;
+                    }
+                    Minesweeper.removeController(((GameViewController)((JFrame)e.getWindow()).getContentPane()));
+                    if(Minesweeper.isMainController(((GameViewController)((JFrame)e.getWindow()).getContentPane())))
+                        System.exit(0);
+                }
+            });
+        }
     }
 }

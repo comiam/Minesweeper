@@ -9,6 +9,7 @@ public class Timer
     private static Runnable runnable;
     private static TimerTask task;
     private static java.util.Timer timer;
+    private static boolean running = false;
 
     private static void makeTask()
     {
@@ -29,25 +30,44 @@ public class Timer
 
     public static void start(Runnable r)
     {
+        if(running)
+            return;
+
         milliseconds = 0;
         seconds = 0;
         runnable = r;
+        running = true;
         makeTask();
         schedule();
     }
 
     public static void stop()
     {
-        if(timer == null)
+        if(timer == null || !running)
             return;
+        running = false;
         timer.cancel();
         timer.purge();
     }
 
     public static void on()
     {
+        if(running)
+            return;
+        running = true;
         makeTask();
         schedule();
+    }
+
+    public static void clearTime()
+    {
+        milliseconds = 0;
+        seconds = 0;
+    }
+
+    public static boolean isRunning()
+    {
+        return running;
     }
 
     public static long getSeconds()
@@ -58,14 +78,5 @@ public class Timer
     private static void schedule()
     {
         timer.schedule(task,0,100);
-    }
-
-    public static String makeTimeString(long val)
-    {
-        String time = Long.toString(val);
-        if(time.length() == 1)
-            time = "0" + time;
-
-        return time;
     }
 }

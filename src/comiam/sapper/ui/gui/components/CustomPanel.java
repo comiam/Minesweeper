@@ -1,4 +1,4 @@
-package comiam.sapper.ui.components;
+package comiam.sapper.ui.gui.components;
 
 import javax.swing.*;
 import java.awt.*;

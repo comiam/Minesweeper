@@ -1,6 +1,6 @@
-package comiam.sapper.ui.components;
+package comiam.sapper.ui.gui.components;
 
-import comiam.sapper.game.Sapper;
+import comiam.sapper.game.Minesweeper;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,7 +13,7 @@ public class CustomDialog
                     "32x32"
             };
 
-    public static Sapper.FieldDimension getDimension(Component frame)
+    public static Minesweeper.FieldDimension getDimension(Component frame)
     {
         String result = (String) JOptionPane.showInputDialog(
                 frame,
@@ -23,15 +23,15 @@ public class CustomDialog
                 null, dimensions, dimensions[0]);
 
         if(result == null)
-            return Sapper.FieldDimension.nothing;
+            return Minesweeper.FieldDimension.nothing;
 
         switch(result)
         {
             case "16x16":
-                return Sapper.FieldDimension.x16;
+                return Minesweeper.FieldDimension.x16;
             case "32x32":
-                return Sapper.FieldDimension.x32;
+                return Minesweeper.FieldDimension.x32;
         }
-        return Sapper.FieldDimension.nothing;
+        return Minesweeper.FieldDimension.nothing;
     }
 }

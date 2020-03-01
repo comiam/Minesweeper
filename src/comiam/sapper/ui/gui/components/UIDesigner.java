@@ -1,16 +1,20 @@
-package comiam.sapper.ui.components;
+package comiam.sapper.ui.gui.components;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class UIDesigner
 {
+    private static boolean initWas = false;
     public static final Color DEFAULT_BACKGROUND = new Color(60, 63, 65);
     public static final Color BUTTON_BACKGROUND = new Color(60, 60, 60);
     public static final Color BUTTON_BACKGROUND_PRESSED = new Color(60, 60, 60);
 
     public static void init()
     {
+        if(initWas)
+            return;
+
         UIManager.put("OptionPane.background", DEFAULT_BACKGROUND);
         UIManager.put("OptionPane.messageForeground", Color.LIGHT_GRAY);
         UIManager.put("OptionPane.font", getFont(20, UIManager.getFont("OptionPane.font"), false));
@@ -33,6 +37,7 @@ public class UIDesigner
         UIManager.put("Label.font", getFont(15, UIManager.getFont("Label.font"), false));
 
         UIManager.put("ScrollBar.background", Color.DARK_GRAY);
+        initWas = true;
     }
 
     public static Font getFont(int size, Font currentFont, boolean bold)

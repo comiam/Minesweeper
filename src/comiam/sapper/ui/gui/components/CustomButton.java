@@ -1,11 +1,11 @@
-package comiam.sapper.ui.components;
+package comiam.sapper.ui.gui.components;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 
-import static comiam.sapper.ui.components.UIDesigner.BUTTON_BACKGROUND;
-import static comiam.sapper.ui.components.UIDesigner.BUTTON_BACKGROUND_PRESSED;
+import static comiam.sapper.ui.gui.components.UIDesigner.BUTTON_BACKGROUND;
+import static comiam.sapper.ui.gui.components.UIDesigner.BUTTON_BACKGROUND_PRESSED;
 
 public class CustomButton extends JButton
 {

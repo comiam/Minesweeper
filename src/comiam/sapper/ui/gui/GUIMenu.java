@@ -1,29 +1,29 @@
-package comiam.sapper.ui;
+package comiam.sapper.ui.gui;
 
-import comiam.sapper.game.Sapper;
-import comiam.sapper.ui.components.CustomButton;
-import comiam.sapper.ui.components.CustomDialog;
-import comiam.sapper.ui.components.UIDesigner;
+import comiam.sapper.game.Minesweeper;
+import comiam.sapper.ui.gui.components.CustomButton;
+import comiam.sapper.ui.gui.components.UIDesigner;
+import comiam.sapper.ui.tui.TextGame;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowFocusListener;
 
-import static comiam.sapper.ui.components.UIDesigner.DEFAULT_BACKGROUND;
+import static comiam.sapper.ui.gui.components.CustomDialog.getDimension;
+import static comiam.sapper.ui.gui.components.UIDesigner.DEFAULT_BACKGROUND;
 
-public class MainMenu extends JFrame
+public class GUIMenu extends JFrame
 {
     private static JFrame mainFrame;
     private JPanel mainPanel;
-    private static GameFrame gamePanel;
+    private boolean twoInterfacesNeed = false;
 
-    public MainMenu()
+    public GUIMenu(boolean twoInterfacesNeed)
     {
+        UIDesigner.init();
         if(mainFrame != null)
             return;
 
+        this.twoInterfacesNeed = twoInterfacesNeed;
         setupUI();
         setContentPane(getRootComponent());
         setSize(180, 240);
@@ -43,11 +43,11 @@ public class MainMenu extends JFrame
         CustomButton newGameButton = new CustomButton();
         newGameButton.setText("New game");
         newGameButton.addActionListener(e -> {
-            Sapper.FieldDimension dim = CustomDialog.getDimension(mainFrame);
-            if(dim == Sapper.FieldDimension.nothing)
+            Minesweeper.FieldDimension dim = getDimension(mainFrame);
+            if(dim == Minesweeper.FieldDimension.nothing)
                 return;
 
-            openGameFrame(dim);
+            openGame(dim);
         });
 
         Font label12Font = UIDesigner.getFont(15, newGameButton.getFont(), false);
@@ -64,7 +64,7 @@ public class MainMenu extends JFrame
         highScoresButton.setText("High Scores");
         label12Font = UIDesigner.getFont(15, newGameButton.getFont(), false);
         if(label12Font != null) highScoresButton.setFont(label12Font);
-        highScoresButton.addActionListener((e) -> ScoresFrame.showRecords());
+        highScoresButton.addActionListener((e) -> ScoresFrame.showRecords(this));
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 3;
@@ -115,71 +115,21 @@ public class MainMenu extends JFrame
         mainPanel.add(spacer1, gbc);
     }
 
-    private void openGameFrame(Sapper.FieldDimension dim)
+    private void openGame(Minesweeper.FieldDimension dim)
     {
-        Sapper.newGame(dim);
+        Minesweeper.newGame(dim);
 
-        gamePanel = new GameFrame(dim);
-        mainFrame.setContentPane(gamePanel);
-        mainFrame.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-        mainFrame.addWindowFocusListener(new WindowFocusListener()
+        GUIGame cont = new GUIGame();
+        Minesweeper.setMainController(cont);
+        cont.init(this);
+
+        if(twoInterfacesNeed)
         {
-            @Override
-            public void windowGainedFocus(WindowEvent e)
-            {
-                if(Sapper.isGameStarted() && getGameFrame().canMakePause())
-                    getGameFrame().offPause();
-            }
-
-            @Override
-            public void windowLostFocus(WindowEvent e)
-            {
-                if(Sapper.isGameStarted() && getGameFrame().canMakePause())
-                    getGameFrame().onPause();
-            }
-        });
-        
-        mainFrame.addWindowListener(new WindowAdapter()
-        {
-            @Override
-            public void windowClosing(WindowEvent e)
-            {
-                if(Sapper.isGameStarted())
-                {
-                    int a = JOptionPane.showConfirmDialog(MainMenu.getGameFrame(),
-                            "<html><h2>You are sure?</h2><i>Do you want close the game?</i>",
-                            "Message",
-                            JOptionPane.YES_NO_OPTION,
-                            JOptionPane.WARNING_MESSAGE);
-
-                    if(a != JOptionPane.YES_OPTION)
-                        return;
-                }
-                System.exit(0);
-            }
-        });
-        updatePanel();
+            TextGame tg = new TextGame();
+            Minesweeper.addController(tg);
+            tg.init(null);
+        }
     }
-
-    public static void setToMinimum()
-    {
-        mainFrame.setMinimumSize(new Dimension(100, 100));
-    }
-
-    public static void updatePanel()
-    {
-        mainFrame.revalidate();
-        mainFrame.pack();
-        mainFrame.setMinimumSize(mainFrame.getSize());
-        mainFrame.setResizable(true);
-        mainFrame.setLocationRelativeTo(null);
-    }
-
-    public static GameFrame getGameFrame()
-    {
-        return gamePanel;
-    }
-
     private JComponent getRootComponent()
     {
         return mainPanel;

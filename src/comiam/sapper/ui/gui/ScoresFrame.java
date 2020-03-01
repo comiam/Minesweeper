@@ -1,9 +1,9 @@
-package comiam.sapper.ui;
+package comiam.sapper.ui.gui;
 
 import comiam.sapper.game.records.Pair;
 import comiam.sapper.game.records.ScoreRecords;
-import comiam.sapper.ui.components.CustomButton;
-import comiam.sapper.ui.components.UIDesigner;
+import comiam.sapper.ui.gui.components.CustomButton;
+import comiam.sapper.ui.gui.components.UIDesigner;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,12 +13,12 @@ public class ScoresFrame
 {
     private static JTextArea textArea = null;
 
-    public static void showRecords()
+    public static void showRecords(JFrame parent)
     {
         ArrayList<Pair> pairs = ScoreRecords.getRecords();
         if(pairs == null)
         {
-            JOptionPane.showMessageDialog(MainMenu.getGameFrame(), "Records list is empty!");
+            JOptionPane.showMessageDialog(parent, "Records list is empty!");
             return;
         }
 

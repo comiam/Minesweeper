@@ -1,6 +1,6 @@
 package comiam.sapper.util;
 
-import comiam.sapper.game.Sapper;
+import comiam.sapper.game.Minesweeper;
 
 import java.awt.*;
 
@@ -8,7 +8,7 @@ public class CoordinateUtils
 {
     public static boolean isAvailable(int x, int y)
     {
-        return x < Sapper.getFieldSize().width && y < Sapper.getFieldSize().height && x >= 0 && y >= 0;
+        return x < Minesweeper.getFieldSize().width && y < Minesweeper.getFieldSize().height && x >= 0 && y >= 0;
     }
 
     public static Point[] getDotsNear(int x, int y)
