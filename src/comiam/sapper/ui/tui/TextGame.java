@@ -40,29 +40,31 @@ public class TextGame implements GameViewController
         if(console == null)
             return;
 
-        String[] line;
+        String line;
         do
         {
-            line = console.readLine().split(" ");
+            line = console.readLine().trim();
 
-            if(line.length > 3)
+            if(line.split(" ").length > 3)
             {
-                println("Unknown command: " + TextUtils.getStringFromArray(line));
+                println("Unknown command: " + line);
                 if(Minesweeper.isMainController(this))
                     print("> ");
                 continue;
             }
 
-            if(line.length == 3 && isNumeric(line[1]) && isNumeric(line[2]) && !isNumeric(line[0]))
+            String[] lineArr = line.split(" ");
+
+            if(lineArr.length == 3 && isNumeric(lineArr[1]) && isNumeric(lineArr[2]) && !isNumeric(lineArr[0]))
             {
-                if(!CoordinateUtils.isAvailable(parseInt(line[1]), parseInt(line[2])))
+                if(!CoordinateUtils.isAvailable(parseInt(lineArr[1]), parseInt(lineArr[2])))
                 {
                     println("Wrong coordinates!");
                     if(Minesweeper.isMainController(this))
                         print("> ");
                     continue;
                 }
-                if(line[0].length() != 1 || !"mo".contains(line[0]))
+                if(lineArr[0].length() != 1 || !"mo".contains(lineArr[0]))
                 {
                     println("Wrong mode!");
                     if(Minesweeper.isMainController(this))
@@ -72,7 +74,7 @@ public class TextGame implements GameViewController
 
                 if(!Minesweeper.isGameStarted())
                 {
-                    Minesweeper.initField(parseInt(line[1]), parseInt(line[2]));
+                    Minesweeper.initField(parseInt(lineArr[1]), parseInt(lineArr[2]));
                     Minesweeper.startGame();
                     start(Minesweeper::repaintControllersTimer);
                 }
@@ -82,15 +84,15 @@ public class TextGame implements GameViewController
                         print("> ");
                     continue;
                 }
-                switch(line[0])
+                switch(lineArr[0])
                 {
-                    case "o" -> Minesweeper.openCell(parseInt(line[1]), parseInt(line[2]));
-                    case "m" -> Minesweeper.markCell(parseInt(line[1]), parseInt(line[2]));
+                    case "o" -> Minesweeper.openCell(parseInt(lineArr[1]), parseInt(lineArr[2]));
+                    case "m" -> Minesweeper.markCell(parseInt(lineArr[1]), parseInt(lineArr[2]));
                 }
                 continue;
             }
 
-            switch(TextUtils.getStringFromArray(line))
+            switch(line)
             {
                 case "pause" -> {
                     if(!Minesweeper.isGameStarted())
@@ -114,7 +116,7 @@ public class TextGame implements GameViewController
                 case "new" -> Minesweeper.rebuildControllers();
                 case "exit" -> System.exit(0);
                 default -> {
-                    println("Unknown command!");
+                    println("Unknown command: " + line);
                     if(Minesweeper.isMainController(this))
                         print("> ");
                 }
@@ -242,6 +244,7 @@ public class TextGame implements GameViewController
     {
         gameWinFlag = false;
         gameOverFlag = false;
+        stopFlag = false;
         for(var arr : map)
             Arrays.fill(arr, (byte) NOT_OPENED_CELL);
         if(Minesweeper.isMainController(this))
@@ -260,7 +263,7 @@ public class TextGame implements GameViewController
         {
             Timer.stop();
             println("Pls, select field size: x16 or x32");
-            String[] line;
+            String line;
             Minesweeper.FieldDimension dim;
 
             menu:
@@ -268,14 +271,14 @@ public class TextGame implements GameViewController
             {
                 if(Minesweeper.isMainController(this))
                     print("> ");
-                line = console.readLine().split(" ");
-                if(line.length > 1)
+                line = console.readLine().trim();
+                if(line.split(" ").length > 1)
                 {
-                    println("Unknown size: " + TextUtils.getStringFromArray(line));
+                    println("Unknown size: " + line);
                     continue;
                 }
 
-                switch(TextUtils.getStringFromArray(line))
+                switch(line)
                 {
                     case "x16" -> {
                         dim = Minesweeper.FieldDimension.x16;
@@ -290,7 +293,7 @@ public class TextGame implements GameViewController
                         return false;
                     }
                     case "exit" -> System.exit(0);
-                    default -> println("Unknown size: " + TextUtils.getStringFromArray(line));
+                    default -> println("Unknown size: " + line);
                 }
             } while(true);
 
@@ -302,6 +305,7 @@ public class TextGame implements GameViewController
 
         gameOverFlag = false;
         gameWinFlag = false;
+        stopFlag = false;
 
         display();
 
@@ -333,9 +337,12 @@ public class TextGame implements GameViewController
     }
 
     @Override
-    public void update()
+    public void update(boolean makeOnlyOutSymbol)
     {
-        display();
+        if(makeOnlyOutSymbol)
+            print("> ");
+        else
+            display();
     }
 
 }

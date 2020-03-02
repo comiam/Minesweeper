@@ -14,16 +14,6 @@ public class TextUtils
         }
     }
 
-    public static String getStringFromArray(String[] arr)
-    {
-        if(arr == null)
-            return null;
-        StringBuilder res = new StringBuilder();
-        for(String s : arr)
-            res.append(s);
-        return res.toString();
-    }
-
     public static <T extends Number> String getNumericString(T val)
     {
         if(val == null || val.longValue() > 100 || val.longValue() < 0)

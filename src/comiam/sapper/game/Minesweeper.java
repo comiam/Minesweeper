@@ -14,7 +14,7 @@ import static comiam.sapper.util.BitOperations.getBit;
 import static comiam.sapper.util.BitOperations.setBit;
 import static comiam.sapper.util.CoordinateUtils.getDotsNear;
 import static comiam.sapper.util.CoordinateUtils.isAvailable;
-import static comiam.sapper.util.GUIUtils.invokeInGUI;
+import static comiam.sapper.util.GUIUtils.invokeController;
 
 public class Minesweeper
 {
@@ -31,7 +31,7 @@ public class Minesweeper
     public static void showMenu(boolean two, boolean mainGUI)
     {
         if(mainGUI)
-            invokeInGUI(() -> new GUIMenu(two));
+            invokeController(null, () -> new GUIMenu(two));
         else
             new TextMenu(two);
     }
@@ -99,7 +99,11 @@ public class Minesweeper
     public static void openCell(int x, int y, boolean main)
     {
         if(!isNotTagged(x,y))
+        {
+            if(!isMainControllerIsGUI())
+                mainController.update(true);
             return;
+        }
 
         if(isMarked(map[x][y]) || isMaybeMarked(map[x][y]))
         {
@@ -109,70 +113,48 @@ public class Minesweeper
             removeMaybeMark(x, y);
 
             for(var in : interfaces)
-            {
-                if(in.isGUI())
-                    invokeInGUI(() -> {
-                        in.repaintFlag();
-                        in.markCell(x,y);
-                    });
-                else
-                {
+                invokeController(in, () -> {
                     in.repaintFlag();
                     in.markCell(x,y);
-                }
-            }
+                });
         }
 
         if(isMined(map[x][y]))
             gameOver();
         else
         {
+            tagCell(x, y);
             if(minedNearCell(x, y) > 0)
                 for(var in : interfaces)
-                    if(in.isGUI())
-                        invokeInGUI(() -> in.setNumCell(x, y, minedNearCell(x, y)));
-                    else
-                        in.setNumCell(x, y, minedNearCell(x, y));
+                    invokeController(in, () -> in.setNumCell(x, y, minedNearCell(x, y)));
             else
             {
                 for(var in : interfaces)
-                    if(in.isGUI())
-                        invokeInGUI(() -> in.freeCell(x, y));
-                    else
-                        in.freeCell(x, y);
-                tagCell(x, y);
+                    invokeController(in, () -> in.freeCell(x, y));
 
                 for(var point : getDotsNear(x,y))
                     if(isAvailable(point.x, point.y) && minedNearCell(point.x, point.y) == 0 && isNotTagged(point.x, point.y))
                         openCell(point.x, point.y, false);
                     else if(isAvailable(point.x, point.y) && minedNearCell(point.x, point.y) != 0)
                     {
+                        tagCell(point.x, point.y);
                         if(isMarked(map[point.x][point.y]) || isMaybeMarked(map[point.x][point.y]))
                         {
                             for(var in : interfaces)
-                                if(in.isGUI())
-                                    invokeInGUI(() -> in.offMarkOnCell(point.x, point.y));
-                                else
-                                    in.offMarkOnCell(point.x, point.y);
+                                invokeController(in, () -> in.offMarkOnCell(point.x, point.y));
 
                             if(isMarked(map[point.x][point.y]))
                             {
                                 flagCount--;
                                 for(var in : interfaces)
-                                    if(in.isGUI())
-                                        invokeInGUI(in::repaintFlag);
-                                    else
-                                        in.repaintFlag();
+                                    invokeController(in, in::repaintFlag);
                             }
 
                             removeMaybeMark(point.x, point.y);
                             removeMark(point.x,point.y);
                         }
                         for(var in : interfaces)
-                            if(in.isGUI())
-                                invokeInGUI(() -> in.setNumCell(point.x, point.y, minedNearCell(point.x, point.y)));
-                            else
-                                in.setNumCell(point.x, point.y, minedNearCell(point.x, point.y));
+                            invokeController(in, () -> in.setNumCell(point.x, point.y, minedNearCell(point.x, point.y)));
                     }
             }
         }
@@ -181,11 +163,18 @@ public class Minesweeper
 
         if(main && !gameEnded && !checkForWin() && gameStarted)
             for(var in : interfaces)
-                in.update();
+                in.update(false);
     }
 
     public static void markCell(int x, int y)
     {
+        if(!isNotTagged(x, y))
+        {
+            if(!isMainControllerIsGUI())
+                mainController.update(true);
+            return;
+        }
+
         if(isMarked(map[x][y]))
         {
             removeMark(x,y);
@@ -193,27 +182,15 @@ public class Minesweeper
 
             flagCount--;
             for(var in : interfaces)
-            {
-                if(in.isGUI())
-                    invokeInGUI(() -> {
-                        in.repaintFlag();
-                        in.markMaybeCell(x, y);
-                    });
-                else
-                {
+                invokeController(in,() -> {
                     in.repaintFlag();
                     in.markMaybeCell(x, y);
-                }
-
-            }
+                });
         } else if(isMaybeMarked(map[x][y]))
         {
             removeMaybeMark(x, y);
             for(var in : interfaces)
-                if(in.isGUI())
-                    invokeInGUI(() -> in.offMarkOnCell(x, y));
-                else
-                    in.offMarkOnCell(x, y);
+                invokeController(in, () -> in.offMarkOnCell(x, y));
         } else
         {
             if(flagCount >= maxFlagCount)
@@ -222,24 +199,16 @@ public class Minesweeper
 
             flagCount++;
             for(var in : interfaces)
-            {
-                if(in.isGUI())
-                    invokeInGUI(() -> {
-                        in.repaintFlag();
-                        in.markCell(x, y);
-                    });
-                else
-                {
+                invokeController(in, () -> {
                     in.repaintFlag();
                     in.markCell(x, y);
-                }
-            }
+                });
         }
         if(checkForWin())
             gameWin();
 
         for(var in : interfaces)
-            in.update();
+            in.update(false);
     }
 
     private static boolean checkForWin()
@@ -313,16 +282,10 @@ public class Minesweeper
         gameStarted = false;
 
         for(var in : interfaces)
-            if(in.isGUI())
-                invokeInGUI(() -> in.disableGame(map));
-            else
-                in.disableGame(map);
+            invokeController(in, () -> in.disableGame(map));
 
         for(var in : interfaces)
-            if(in.isGUI())
-                invokeInGUI(in::noticeOverGame);
-            else
-                in.noticeOverGame();
+            invokeController(in, in::noticeOverGame);
     }
 
     private static void gameWin()
@@ -330,16 +293,10 @@ public class Minesweeper
         gameEnded = true;
         gameStarted = false;
         for(var in : interfaces)
-            if(in.isGUI())
-                invokeInGUI(() -> in.disableGame(map));
-            else
-                in.disableGame(map);
+            invokeController(in, () -> in.disableGame(map));
 
         for(var in : interfaces)
-            if(in.isGUI())
-                invokeInGUI(in::noticeWinGame);
-            else
-                in.noticeWinGame();
+            invokeController(in, in::noticeWinGame);
     }
 
     public static int getFlagCount()
@@ -405,56 +362,36 @@ public class Minesweeper
     public static void repaintControllersTimer()
     {
         for(var in : interfaces)
-            if(in.isGUI())
-                invokeInGUI(in::repaintTimer);
-            else
-                in.repaintTimer();
+            invokeController(in,in::repaintTimer);
     }
 
     public static void rebuildControllers()
     {
         AtomicBoolean access = new AtomicBoolean(false);
-        if(mainController.isGUI())
-            invokeInGUI(() -> access.set(mainController.rebuildField()));
-        else
-            access.set(mainController.rebuildField());
+        invokeController(mainController, () -> access.set(mainController.rebuildField()));
 
         if(access.get())
             for(var in : interfaces)
                 if(!isMainController(in))
-                    if(in.isGUI())
-                        invokeInGUI(in::rebuildField);
-                    else
-                        in.rebuildField();
+                    invokeController(in, in::rebuildField);
     }
 
     public static void restartControllers()
     {
         AtomicBoolean access = new AtomicBoolean(false);
-        if(mainController.isGUI())
-            invokeInGUI(() -> access.set(mainController.restartGame()));
-        else
-            access.set(mainController.restartGame());
-
+        invokeController(mainController, () -> access.set(mainController.restartGame()));
+        
         if(access.get())
             for(var in : interfaces)
                 if(!isMainController(in))
-                    if(in.isGUI())
-                        invokeInGUI(in::restartGame);
-                    else
-                        in.restartGame();
+                    invokeController(in, in::restartGame);
     }
 
     public static void pauseControllers()
     {
         for(var in : interfaces)
             if(!isMainController(in))
-            {
-                if(in.isGUI())
-                    invokeInGUI(in::setPause);
-                else
-                    in.setPause();
-            }
+                invokeController(in, in::setPause);
     }
 
     public enum FieldDimension

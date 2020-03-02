@@ -16,5 +16,6 @@ public interface GameViewController
     void noticeOverGame();
     void noticeWinGame();
     boolean isGUI();
-    void update();
+    //Only for text mode
+    void update(boolean makeOnlyOutSymbol);
 }

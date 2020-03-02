@@ -3,13 +3,12 @@ package comiam.sapper.ui.tui;
 import comiam.sapper.game.records.Pair;
 import comiam.sapper.game.records.ScoreRecords;
 import comiam.sapper.ui.gui.GUIGame;
-import comiam.sapper.util.TextUtils;
 
 import java.io.Console;
 import java.util.ArrayList;
 
 import static comiam.sapper.game.Minesweeper.*;
-import static comiam.sapper.util.GUIUtils.invokeInGUI;
+import static comiam.sapper.util.GUIUtils.invokeController;
 import static comiam.sapper.util.IOUtils.print;
 import static comiam.sapper.util.IOUtils.println;
 
@@ -36,20 +35,20 @@ public class TextMenu
     private void runMenu()
     {
         console = System.console();
-        String[] line;
+        String line;
         menu: do
         {
             print("> ");
-            line = console.readLine().split(" ");
-            if(line.length == 0)
+            line = console.readLine().trim();
+            if(line.split(" ").length == 0)
                 continue;
-            if(line.length > 1)
+            if(line.split(" ").length > 1)
             {
-                println("Unknown command: " + TextUtils.getStringFromArray(line));
+                println("Unknown command: " + line);
                 continue;
             }
 
-            switch(TextUtils.getStringFromArray(line))
+            switch(line)
             {
                 case "play" -> {
                     playGame();
@@ -58,7 +57,7 @@ public class TextMenu
                 case "scores" -> getScores();
                 case "about" -> getAbout();
                 case "exit" -> exit();
-                default -> println("Unknown command: " + TextUtils.getStringFromArray(line));
+                default -> println("Unknown command: " + line);
             }
         }while(true);
     }
@@ -66,22 +65,22 @@ public class TextMenu
     private void playGame()
     {
         println("Pls, select field size: x16 or x32");
-        String[] line;
+        String line;
         FieldDimension dim;
 
         menu: do
         {
             print("> ");
-            line = console.readLine().split(" ");
-            if(line.length == 0)
+            line = console.readLine().trim();
+            if(line.split(" ").length == 0)
                 continue;
-            if(line.length > 1)
+            if(line.split(" ").length > 1)
             {
-                println("Unknown size: " + TextUtils.getStringFromArray(line));
+                println("Unknown size: " + line);
                 continue;
             }
 
-            switch(TextUtils.getStringFromArray(line))
+            switch(line)
             {
                 case "x16" -> {
                     dim = FieldDimension.x16;
@@ -92,7 +91,7 @@ public class TextMenu
                     break menu;
                 }
                 case "exit", "nothing" -> exit();
-                default -> println("Unknown size: " + TextUtils.getStringFromArray(line));
+                default -> println("Unknown size: " + line);
             }
         }while(true);
 
@@ -103,7 +102,7 @@ public class TextMenu
 
         if(twoInterfacesNeed)
         {
-            invokeInGUI(() -> {
+            invokeController(null, () -> {
                 GUIGame cont = new GUIGame();
                 addController(cont);
                 cont.init(null);

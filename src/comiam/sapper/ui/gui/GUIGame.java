@@ -398,7 +398,7 @@ public class GUIGame extends JPanel implements GameViewController
             b.setText("");
             b.setIcon(null);
             b.setDisabledIcon(null);
-            b.setEnabled(true);
+            b.setEnabled(Minesweeper.isMainController(this));
             imageMap.remove(b);
         }
         if(Minesweeper.isMainController(this))
@@ -487,7 +487,7 @@ public class GUIGame extends JPanel implements GameViewController
     }
 
     @Override
-    public void update(){}
+    public void update(boolean makeOnlyOutSymbol){}
 
     private CustomPanel createPausePanel()
     {
@@ -598,6 +598,9 @@ public class GUIGame extends JPanel implements GameViewController
                 };
         btn.setBackground(col);
         btn.setText("" + num);
+        btn.setIcon(null);
+        btn.setDisabledIcon(null);
+        btn.repaint();
         btn.setEnabled(false);
     }
 
@@ -605,6 +608,7 @@ public class GUIGame extends JPanel implements GameViewController
     {
         CustomButton btn = cells[y * Minesweeper.getFieldSize().width + x];
         btn.setIcon(new ImageIcon(flag.getScaledInstance((int) (btn.getWidth() - btn.getWidth() * 0.15), (int) (btn.getHeight() - btn.getHeight() * 0.15), Image.SCALE_AREA_AVERAGING)));
+        btn.repaint();
         imageMap.put(btn, flag);
     }
 
@@ -612,6 +616,7 @@ public class GUIGame extends JPanel implements GameViewController
     {
         CustomButton btn = cells[y * Minesweeper.getFieldSize().width + x];
         btn.setIcon(new ImageIcon(flagMaybe.getScaledInstance((int) (btn.getWidth() - btn.getWidth() * 0.15), (int) (btn.getHeight() - btn.getHeight() * 0.15), Image.SCALE_AREA_AVERAGING)));
+        btn.repaint();
         imageMap.put(btn, flagMaybe);
     }
 
@@ -619,6 +624,8 @@ public class GUIGame extends JPanel implements GameViewController
     {
         CustomButton btn = cells[y * Minesweeper.getFieldSize().width + x];
         btn.setIcon(null);
+        btn.setDisabledIcon(null);
+        btn.repaint();
         imageMap.remove(btn);
     }
 
@@ -626,7 +633,10 @@ public class GUIGame extends JPanel implements GameViewController
     {
         CustomButton btn = cells[y * Minesweeper.getFieldSize().width + x];
         btn.setBackground(Color.WHITE);
+        btn.setIcon(null);
+        btn.setDisabledIcon(null);
         btn.setEnabled(false);
+        btn.repaint();
     }
 
     public void onPause()
