@@ -415,7 +415,7 @@ public class TextGame implements GameViewController
             println("Score list is empty!\n\n");
         }else
             for(int i = 0; i < pairs.size();i++)
-                println(i + ") " + pairs.get(i).getName() + ": " + pairs.get(i).getTime());
+                println((i + 1) + ") " + pairs.get(i).getName() + ": " + pairs.get(i).getTime());
 
         println();
         println();

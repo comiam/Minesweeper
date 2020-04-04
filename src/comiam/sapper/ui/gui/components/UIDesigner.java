@@ -2,6 +2,7 @@ package comiam.sapper.ui.gui.components;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
 
 public class UIDesigner
 {
@@ -45,6 +46,14 @@ public class UIDesigner
         if(currentFont == null)
             return null;
         String resultName;
+        try
+        {
+            loadFont("Sawasdee");
+            loadFont("Sawasdee-Bold");
+        } catch(Throwable e)
+        {
+            e.printStackTrace();
+        }
         Font testFont = new Font("Sawasdee", Font.PLAIN, 10);
 
         if(testFont.canDisplay('a') && testFont.canDisplay('1'))
@@ -54,5 +63,10 @@ public class UIDesigner
 
 
         return new Font(resultName, bold ? Font.BOLD : Font.PLAIN, size >= 0 ? size : currentFont.getSize());
+    }
+
+    private static void loadFont(String name) throws FontFormatException, IOException
+    {
+        GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(Font.createFont(0, UIDesigner.class.getResourceAsStream("/res/" + name + ".ttf")));
     }
 }
