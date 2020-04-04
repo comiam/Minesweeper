@@ -6,6 +6,7 @@ import comiam.sapper.ui.gui.GUIGame;
 
 import java.io.Console;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 import static comiam.sapper.game.Minesweeper.*;
 import static comiam.sapper.util.GUIUtils.invokeController;
@@ -15,7 +16,10 @@ import static comiam.sapper.util.IOUtils.println;
 public class TextMenu
 {
     private final boolean twoInterfacesNeed;
+    private boolean useConsole = true;
+
     private Console console;
+    private Scanner scanner;
 
     public TextMenu(boolean twoInterfacesNeed)
     {
@@ -34,12 +38,21 @@ public class TextMenu
 
     private void runMenu()
     {
-        console = System.console();
+        if((console = System.console()) == null)
+        {
+            useConsole = false;
+            scanner = new Scanner(System.in);
+        }
+
         String line;
         menu: do
         {
             print("> ");
-            line = console.readLine().trim();
+            if(useConsole)
+                line = console.readLine().trim();
+            else
+                line = scanner.nextLine().trim();
+
             if(line.split(" ").length == 0)
                 continue;
             if(line.split(" ").length > 1)
@@ -71,7 +84,11 @@ public class TextMenu
         menu: do
         {
             print("> ");
-            line = console.readLine().trim();
+            if(useConsole)
+                line = console.readLine().trim();
+            else
+                line = scanner.nextLine().trim();
+
             if(line.split(" ").length == 0)
                 continue;
             if(line.split(" ").length > 1)
@@ -108,7 +125,7 @@ public class TextMenu
                 cont.init(null);
             });
         }
-        tg.init(console);
+        tg.init(true);
     }
 
     private void getScores()
@@ -117,10 +134,9 @@ public class TextMenu
         if(pairs == null)
         {
             println("Records list is empty!");
-            return;
-        }
-        for(var p : pairs)
-            println(p.getName() + ": " + p.getTime());
+        }else
+            for(var p : pairs)
+                println(p.getName() + ": " + p.getTime());
     }
 
     private void getAbout()

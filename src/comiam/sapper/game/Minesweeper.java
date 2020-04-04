@@ -18,7 +18,7 @@ import static comiam.sapper.util.GUIUtils.invokeController;
 
 public class Minesweeper
 {
-    public static final String GAME_VERSION = "1.23.";
+    public static final String GAME_VERSION = "1.31.";
     private static int flagCount;
     private static int maxFlagCount;
     private static boolean gameStarted = false;
@@ -55,7 +55,7 @@ public class Minesweeper
             case x16:
                 row = 16;
                 col = 16;
-                maxFlagCount = 50;
+                maxFlagCount = 40;
                 break;
             case x32:
                 row = 32;
@@ -100,8 +100,7 @@ public class Minesweeper
     {
         if(!isNotTagged(x,y))
         {
-            if(!isMainControllerIsGUI())
-                mainController.update(true);
+            mainController.update(true);
             return;
         }
 
@@ -170,8 +169,7 @@ public class Minesweeper
     {
         if(!isNotTagged(x, y))
         {
-            if(!isMainControllerIsGUI())
-                mainController.update(true);
+            mainController.update(true);
             return;
         }
 
@@ -215,7 +213,7 @@ public class Minesweeper
     {
         for(byte[] bytes : map)
             for(byte aByte : bytes)
-                if(isMined(aByte) && !isMarked(aByte))
+                if((isMined(aByte) && !isMarked(aByte)) || (!isMined(aByte) && isNotTagged(aByte)))
                     return false;
         return true;
     }
@@ -273,7 +271,12 @@ public class Minesweeper
 
     private static boolean isNotTagged(int x, int y)
     {
-        return getBit(map[x][y], 3) != 1;
+        return isNotTagged(map[x][y]);
+    }
+
+    private static boolean isNotTagged(byte aByte)
+    {
+        return getBit(aByte, 3) != 1;
     }
 
     private static void gameOver()

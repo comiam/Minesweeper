@@ -1,13 +1,16 @@
 package comiam.sapper.ui.tui;
 
 import comiam.sapper.game.Minesweeper;
+import comiam.sapper.game.records.Pair;
+import comiam.sapper.game.records.ScoreRecords;
 import comiam.sapper.time.Timer;
 import comiam.sapper.ui.GameViewController;
 import comiam.sapper.util.CoordinateUtils;
-import comiam.sapper.util.TextUtils;
 
 import java.io.Console;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Scanner;
 
 import static comiam.sapper.time.Timer.*;
 import static comiam.sapper.util.IOUtils.print;
@@ -23,27 +26,38 @@ public class TextGame implements GameViewController
     private static final int MARKED_MAYBE_CELL = -3;
     private static final int MINED_CELL = -4;
     private Console console;
+    private Scanner scanner;
+
     private int[][] map;
     private boolean gameOverFlag = false;
     private boolean gameWinFlag = false;
     private boolean stopFlag = false;
+    private boolean useConsole = true;
 
-    public void init(Console console)
+    public void init(boolean main)
     {
         map = new int[Minesweeper.getFieldSize().width][Minesweeper.getFieldSize().height];
 
-        this.console = console;
         for(var arr : map)
             Arrays.fill(arr, NOT_OPENED_CELL);
 
-        display();
-        if(console == null)
+        display(true);
+        if(!main)
             return;
+
+        if((console = System.console()) == null)
+        {
+            useConsole = false;
+            scanner = new Scanner(System.in);
+        }
 
         String line;
         do
         {
-            line = console.readLine().trim();
+            if(useConsole)
+                line = console.readLine().trim();
+            else
+                line = scanner.nextLine().trim();
 
             if(line.split(" ").length > 3)
             {
@@ -81,7 +95,7 @@ public class TextGame implements GameViewController
                 if(Minesweeper.isGameEnded())
                 {
                     if(Minesweeper.isMainController(this))
-                        print("> ");
+                        print("> lol");
                     continue;
                 }
                 switch(lineArr[0])
@@ -94,6 +108,17 @@ public class TextGame implements GameViewController
 
             switch(line)
             {
+                case "help", "?" -> {
+                    println("""
+                               o <x> <y> - open cell with this coordinates
+                               m <x> <y> - mark/mark for sure/unmark cell with this coordinates
+                               pause     - pause a timer of game
+                               replay    - replay game with same field size
+                               new       - play a new game
+                               exit      - exit from game
+                            """);
+                    print("> ");
+                }
                 case "pause" -> {
                     if(!Minesweeper.isGameStarted())
                     {
@@ -116,6 +141,12 @@ public class TextGame implements GameViewController
                 case "new" -> Minesweeper.rebuildControllers();
                 case "exit" -> System.exit(0);
                 default -> {
+                    if(gameWinFlag || gameOverFlag || line.isEmpty())
+                    {
+                        if(Minesweeper.isMainController(this))
+                            print("> ");
+                        continue;
+                    }
                     println("Unknown command: " + line);
                     if(Minesweeper.isMainController(this))
                         print("> ");
@@ -124,7 +155,7 @@ public class TextGame implements GameViewController
         } while(true);
     }
 
-    private void display()
+    private void display(boolean getInvite)
     {
         println(getTimeString(getSeconds() / 3600) + ":" + getTimeString((getSeconds() % 3600) / 60) + ":" + getTimeString(getSeconds() % 60));
         println(Minesweeper.getFlagCount() + "/" + Minesweeper.getMaxFlagCount());
@@ -163,11 +194,29 @@ public class TextGame implements GameViewController
             println();
         }
         if(gameOverFlag)
-            println("YOU LOSE");
+            println("""
+                        ▓██   ██▓ ▒█████   █    ██     ██▓     ▒█████    ██████ ▓█████
+                         ▒██  ██▒▒██▒  ██▒ ██  ▓██▒   ▓██▒    ▒██▒  ██▒▒██    ▒ ▓█   ▀
+                          ▒██ ██░▒██░  ██▒▓██  ▒██░   ▒██░    ▒██░  ██▒░ ▓██▄   ▒███  
+                          ░ ▐██▓░▒██   ██░▓▓█  ░██░   ▒██░    ▒██   ██░  ▒   ██▒▒▓█  ▄
+                          ░ ██▒▓░░ ████▓▒░▒▒█████▓    ░██████▒░ ████▓▒░▒██████▒▒░▒████▒
+                           ██▒▒▒ ░ ▒░▒░▒░ ░▒▓▒ ▒ ▒    ░ ▒░▓  ░░ ▒░▒░▒░ ▒ ▒▓▒ ▒ ░░░ ▒░ ░
+                         ▓██ ░▒░   ░ ▒ ▒░ ░░▒░ ░ ░    ░ ░ ▒  ░  ░ ▒ ▒░ ░ ░▒  ░ ░ ░ ░  ░
+                         ▒ ▒ ░░  ░ ░ ░ ▒   ░░░ ░ ░      ░ ░   ░ ░ ░ ▒  ░  ░  ░     ░  
+                         ░ ░         ░ ░     ░            ░  ░    ░ ░        ░     ░  ░
+                         ░ ░                                                          
+                        """);
         else if(gameWinFlag)
-            println("YOU WIN");
+            println("""
+                    ██╗   ██╗ ██████╗ ██╗   ██╗    ██╗    ██╗██╗███╗   ██╗
+                    ╚██╗ ██╔╝██╔═══██╗██║   ██║    ██║    ██║██║████╗  ██║
+                     ╚████╔╝ ██║   ██║██║   ██║    ██║ █╗ ██║██║██╔██╗ ██║
+                      ╚██╔╝  ██║   ██║██║   ██║    ██║███╗██║██║██║╚██╗██║
+                       ██║   ╚██████╔╝╚██████╔╝    ╚███╔███╔╝██║██║ ╚████║
+                       ╚═╝    ╚═════╝  ╚═════╝      ╚══╝╚══╝ ╚═╝╚═╝  ╚═══╝
+                    """);
 
-        if(Minesweeper.isMainController(this))
+        if(Minesweeper.isMainController(this) && getInvite)
             print("> ");
     }
 
@@ -175,14 +224,14 @@ public class TextGame implements GameViewController
     public void markCell(int x, int y)
     {
         map[x][y] = MARKED_CELL;
-        display();
+        display(true);
     }
 
     @Override
     public void markMaybeCell(int x, int y)
     {
         map[x][y] = MARKED_MAYBE_CELL;
-        display();
+        display(true);
     }
 
     @Override
@@ -209,7 +258,7 @@ public class TextGame implements GameViewController
         }
         stopFlag = !stopFlag;
 
-        display();
+        display(true);
     }
 
     @Override
@@ -219,14 +268,10 @@ public class TextGame implements GameViewController
     }
 
     @Override
-    public void repaintTimer()
-    {
-    }
+    public void repaintTimer() {}
 
     @Override
-    public void repaintFlag()
-    {
-    }
+    public void repaintFlag() {}
 
     @Override
     public void disableGame(byte[][] map)
@@ -252,7 +297,7 @@ public class TextGame implements GameViewController
             stop();
             Minesweeper.newGame();
         }
-        display();
+        display(true);
         return true;
     }
 
@@ -271,7 +316,12 @@ public class TextGame implements GameViewController
             {
                 if(Minesweeper.isMainController(this))
                     print("> ");
-                line = console.readLine().trim();
+
+                if(useConsole)
+                    line = console.readLine().trim();
+                else
+                    line = scanner.nextLine().trim();
+
                 if(line.split(" ").length > 1)
                 {
                     println("Unknown size: " + line);
@@ -307,7 +357,7 @@ public class TextGame implements GameViewController
         gameWinFlag = false;
         stopFlag = false;
 
-        display();
+        display(true);
 
         return true;
     }
@@ -318,7 +368,14 @@ public class TextGame implements GameViewController
         gameOverFlag = true;
         gameWinFlag = false;
 
-        display();
+        display(false);
+        println("""
+                    Well, now you can enter:
+                    replay - replay game with same field size
+                    new    - play a new game
+                    exit   - exit from game
+                    """);
+        print("> ");
     }
 
     @Override
@@ -327,7 +384,47 @@ public class TextGame implements GameViewController
         gameWinFlag = true;
         gameOverFlag = false;
 
-        display();
+        display(false);
+
+        println("Pls, enter your name:)\nAnd don't use ';'! Maximum lenght - 10 symbols:");
+        String name;
+        do
+        {
+            print("> ");
+            if(useConsole)
+                name = console.readLine().trim();
+            else
+                name = scanner.nextLine().trim();
+        }while(name.length() > 10 && name.contains(";"));
+
+        if(name.isEmpty())
+        {
+            name = (System.getProperty("user.name") == null ? "user" : System.getProperty("user.name").isEmpty() ? "user" : System.getProperty("user.name"));
+            println("Okay... I will write name " + name);
+        }
+
+        Pair pair = new Pair(name + ";" + getTimeString(getSeconds() / 3600) + ":" +
+                          getTimeString((getSeconds() % 3600) / 60) + ":" +
+                          getTimeString(getSeconds() % 60));
+        ScoreRecords.saveRecord(pair);
+
+        println("Score list:");
+        ArrayList<Pair> pairs = ScoreRecords.getRecords();
+        if(pairs == null)
+        {
+            println("Score list is empty!\n\n");
+        }else
+            for(int i = 0; i < pairs.size();i++)
+                println(i + ") " + pairs.get(i).getName() + ": " + pairs.get(i).getTime());
+
+        println();
+        println();
+        println("""
+                    Well, now you can enter:
+                    replay - replay game with same field size
+                    new    - play a new game
+                    exit   - exit from game
+                    """);
     }
 
     @Override
@@ -339,10 +436,10 @@ public class TextGame implements GameViewController
     @Override
     public void update(boolean makeOnlyOutSymbol)
     {
-        if(makeOnlyOutSymbol)
+        if(makeOnlyOutSymbol || gameOverFlag || gameWinFlag)
             print("> ");
         else
-            display();
+            display(true);
     }
 
 }

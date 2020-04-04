@@ -2,12 +2,12 @@ package comiam.sapper.game.records;
 
 public class Pair
 {
-    private String name;
-    private String time;
+    private final String name;
+    private final String time;
 
     public Pair(String data)
     {
-        String[] arr = data.split("_");
+        String[] arr = data.split(";");
         name = arr[0];
         time = arr[1];
     }

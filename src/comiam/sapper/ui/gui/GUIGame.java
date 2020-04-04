@@ -17,8 +17,8 @@ import java.io.IOException;
 import java.util.HashMap;
 
 import static comiam.sapper.time.Timer.*;
-import static comiam.sapper.util.TextUtils.getTimeString;
 import static comiam.sapper.ui.gui.components.UIDesigner.DEFAULT_BACKGROUND;
+import static comiam.sapper.util.TextUtils.getTimeString;
 
 public class GUIGame extends JPanel implements GameViewController
 {
@@ -53,7 +53,7 @@ public class GUIGame extends JPanel implements GameViewController
             this.parent.setLocationRelativeTo(null);
             this.parent.setDefaultCloseOperation(Minesweeper.isMainController(this) ? WindowConstants.EXIT_ON_CLOSE : WindowConstants.DISPOSE_ON_CLOSE);
             this.parent.setVisible(true);
-        }else
+        } else
             this.parent = parent;
 
         makeFrameListeners();
@@ -468,11 +468,12 @@ public class GUIGame extends JPanel implements GameViewController
                     getTimeString((getSeconds() % 3600) / 60) + ":" +
                     getTimeString(getSeconds() % 60) + "!</i>");
 
-            String name = (String) JOptionPane.showInputDialog(parent,"Pls, enter your name :)", "Message", JOptionPane.QUESTION_MESSAGE, null, null, System.getProperty("user.name"));
-            if(name == null)
-                name = System.getProperty("user.name");
+            String name;
+            do
+                name = (String) JOptionPane.showInputDialog(parent, "Pls, enter your name :)\nDon't use ';' and names with length mre than 10! >:З", "Message", JOptionPane.QUESTION_MESSAGE, null, null, System.getProperty("user.name") == null ? "user" : System.getProperty("user.name"));
+            while(name == null || name.contains(";") || name.length() > 10);
 
-            Pair p = new Pair(name + "_" + getTimeString(getSeconds() / 3600) + ":" +
+            Pair p = new Pair(name + ";" + getTimeString(getSeconds() / 3600) + ":" +
                     getTimeString((getSeconds() % 3600) / 60) + ":" +
                     getTimeString(getSeconds() % 60));
             ScoreRecords.saveRecord(p);
@@ -487,7 +488,9 @@ public class GUIGame extends JPanel implements GameViewController
     }
 
     @Override
-    public void update(boolean makeOnlyOutSymbol){}
+    public void update(boolean makeOnlyOutSymbol)
+    {
+    }
 
     private CustomPanel createPausePanel()
     {
@@ -819,7 +822,7 @@ public class GUIGame extends JPanel implements GameViewController
                 @Override
                 public void windowClosing(WindowEvent e)
                 {
-                    if(Minesweeper.isGameStarted() && Minesweeper.isMainController(((GameViewController)((JFrame)e.getWindow()).getContentPane())))
+                    if(Minesweeper.isGameStarted() && Minesweeper.isMainController(((GameViewController) ((JFrame) e.getWindow()).getContentPane())))
                     {
                         int a = JOptionPane.showConfirmDialog(parent,
                                 "<html><h2>You are sure?</h2><i>Do you want close the game?</i>",
@@ -830,8 +833,8 @@ public class GUIGame extends JPanel implements GameViewController
                         if(a != JOptionPane.YES_OPTION)
                             return;
                     }
-                    Minesweeper.removeController(((GameViewController)((JFrame)e.getWindow()).getContentPane()));
-                    if(Minesweeper.isMainController(((GameViewController)((JFrame)e.getWindow()).getContentPane())))
+                    Minesweeper.removeController(((GameViewController) ((JFrame) e.getWindow()).getContentPane()));
+                    if(Minesweeper.isMainController(((GameViewController) ((JFrame) e.getWindow()).getContentPane())))
                         System.exit(0);
                 }
             });

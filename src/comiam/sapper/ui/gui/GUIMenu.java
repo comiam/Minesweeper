@@ -127,7 +127,7 @@ public class GUIMenu extends JFrame
         {
             TextGame tg = new TextGame();
             Minesweeper.addController(tg);
-            tg.init(null);
+            tg.init(false);
         }
     }
     private JComponent getRootComponent()

@@ -18,7 +18,7 @@ public class ScoresFrame
         ArrayList<Pair> pairs = ScoreRecords.getRecords();
         if(pairs == null)
         {
-            JOptionPane.showMessageDialog(parent, "Records list is empty!");
+            JOptionPane.showMessageDialog(parent, "Score list is empty!");
             return;
         }
 

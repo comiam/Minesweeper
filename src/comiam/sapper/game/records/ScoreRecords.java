@@ -17,7 +17,7 @@ public class ScoreRecords
         try(Scanner scan = new Scanner(new File(FileSystemView.getFileSystemView().getDefaultDirectory().getPath() + "/Records.mswp")))
         {
             while(scan.hasNext())
-                records.add(new Pair(scan.next()));
+                records.add(new Pair(scan.nextLine()));
         }catch(Throwable ignored){}
         if(records.isEmpty())
             return null;
@@ -59,7 +59,7 @@ public class ScoreRecords
         try(PrintStream scan = new PrintStream(new File(FileSystemView.getFileSystemView().getDefaultDirectory().getPath() + "/Records.mswp")))
         {
             for(var p : records)
-                scan.println(p.getName() + "_" + p.getTime());
+                scan.println(p.getName() + ";" + p.getTime());
         }catch(Throwable ignored){}
     }
 }
