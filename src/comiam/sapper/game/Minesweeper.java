@@ -55,7 +55,7 @@ public class Minesweeper
             case x16:
                 row = 16;
                 col = 16;
-                maxFlagCount = 40;
+                maxFlagCount = 50;
                 break;
             case x32:
                 row = 32;
