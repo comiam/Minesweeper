@@ -224,7 +224,7 @@ public class GUIGame extends JPanel implements GameViewController
                 btn.addMouseListener(new MouseAdapter()
                 {
                     @Override
-                    public void mouseClicked(MouseEvent e)
+                    public void mousePressed(MouseEvent e)
                     {
                         if(!e.getComponent().isEnabled())
                             return;
